@@ -1,0 +1,42 @@
+# Rebuilds resources.json (Apex's adblock scriptlets) from uBlock Origin's
+# newest code and Brave's resources, and commits it when it changes.
+# Apex downloads resources.json from this repo every few hours.
+name: Build adblock resources
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'  # every 6 hours
+  workflow_dispatch:  # "Run workflow" button on the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Fetch uBlock Origin and Brave resources
+        run: |
+          git clone --depth 1 https://github.com/gorhill/uBlock /tmp/uBlock
+          curl -fsSL -o /tmp/brave-resources.json \
+            https://raw.githubusercontent.com/brave/adblock-resources/master/dist/resources.json
+
+      - name: Build resources.json
+        run: node make_adblock_resources.mjs /tmp/uBlock /tmp/brave-resources.json resources.json
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet resources.json; then
+            echo "No changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Update resources.json (uBlock $(git -C /tmp/uBlock rev-parse --short HEAD))"
+          git push
