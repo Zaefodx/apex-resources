@@ -1,4 +1,4 @@
-# Apex adblock resources
+# Apex resources
 
 `resources.json` holds the scriptlets and redirect resources that Apex Browser's
 ad blocker uses (for example to remove YouTube ads). Apex downloads it from this
@@ -14,3 +14,12 @@ A GitHub Actions job (`.github/workflows/build.yml`) rebuilds the file every
 To rebuild by hand: Actions tab → "Build adblock resources" → Run workflow.
 
 Locally: `node make_adblock_resources.mjs <uBlock checkout> <brave resources.json> resources.json`
+
+## Signing
+
+Apex only accepts `resources.json` with a valid `resources.json.sig`: an
+Ed25519 signature over `apex-resources\n<version>\n` + the file, made with the
+private key in the repo secret `APEX_SIGNING_KEY` (`sign_resources.mjs`).
+Apex also refuses versions older than the one it has. The matching public keys
+are built into Apex (`browser/ui/apex/apex_adblock_resources.cc`), together
+with an offline spare for replacing a leaked key.

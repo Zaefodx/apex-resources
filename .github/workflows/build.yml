@@ -30,13 +30,19 @@ jobs:
       - name: Build resources.json
         run: node make_adblock_resources.mjs /tmp/uBlock /tmp/brave-resources.json resources.json
 
-      - name: Commit if changed
+      # Apex only accepts resources.json with a valid signature from this key
+      # (repo secret APEX_SIGNING_KEY), and only builds newer than it has.
+      - name: Sign and commit if changed
+        env:
+          APEX_SIGNING_KEY: ${{ secrets.APEX_SIGNING_KEY }}
         run: |
-          if git diff --quiet resources.json; then
+          if git diff --quiet resources.json && [ -f resources.json.sig ]; then
             echo "No changes."
             exit 0
           fi
+          node sign_resources.mjs resources.json "$(date +%s)"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -am "Update resources.json (uBlock $(git -C /tmp/uBlock rev-parse --short HEAD))"
+          git add resources.json resources.json.sig
+          git commit -m "Update resources.json (uBlock $(git -C /tmp/uBlock rev-parse --short HEAD))"
           git push
