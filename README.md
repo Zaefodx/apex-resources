@@ -30,3 +30,9 @@ with an offline spare for replacing a leaked key.
 daily it checks the Tor Project for a new stable Tor Expert Bundle, verifies the
 Tor Project's GPG signature, releases `tor.exe` here, and commits `tor.json`
 (version, URL, SHA-256), signed for the purpose "tor".
+
+## wireproxy (bring-your-own WireGuard VPN)
+
+`.github/workflows/wireproxy.yml` publishes a pinned, reviewed wireproxy
+(`github.com/windtf/wireproxy`, ISC) and a signed `wireproxy.json`. Run it by
+hand after updating its VERSION and SHA256.
