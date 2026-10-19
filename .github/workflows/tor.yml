@@ -1,7 +1,8 @@
 # Publishes the Tor client Apex uses for its Tor windows. Daily, it looks for a
 # new stable Tor Expert Bundle from the Tor Project, checks the Tor Project's
-# signature, publishes tor.exe as a GitHub release, and commits tor.json (the
-# version, download URL and SHA-256 of tor.exe), signed with the Apex key.
+# signature, publishes tor.exe and lyrebird.exe (the pluggable transport for
+# obfs4, meek and snowflake bridges) as a GitHub release, and commits tor.json
+# (version, download URLs and SHA-256s), signed with the Apex key.
 name: Publish Tor
 
 on:
@@ -32,7 +33,7 @@ jobs:
             | sed -E 's/href="(.*)\/"/\1/' | sort -V | tail -1)
           echo "Latest: $V"
           echo "V=$V" >> "$GITHUB_ENV"
-          if [ -f tor.json ] && grep -q "\"version\":\"$V\"" tor.json; then
+          if [ -f tor.json ] && grep -q "\"version\":\"$V\"" tor.json && grep -q '"lyrebird"' tor.json; then
             echo "Already published."
             echo "SKIP=1" >> "$GITHUB_ENV"
           fi
@@ -47,7 +48,8 @@ jobs:
           gpg --import tor-key.asc
           gpg --status-fd 1 --verify "$F.asc" "$F" | tee gpg.out
           grep -q "VALIDSIG .* $TOR_KEY" gpg.out
-          tar -xzf "$F" tor/tor.exe
+          tar -xzf "$F" tor/tor.exe tor/pluggable_transports/lyrebird.exe
+          cp tor/pluggable_transports/lyrebird.exe tor/lyrebird.exe
 
       - name: Publish release and signed tor.json
         if: env.SKIP != '1'
@@ -55,14 +57,20 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           APEX_SIGNING_KEY: ${{ secrets.APEX_SIGNING_KEY }}
         run: |
-          gh release create "tor-$V" tor/tor.exe --title "Tor $V" \
-            --notes "tor.exe from the Tor Project's Tor Expert Bundle $V (Windows x86_64), signature checked."
+          if gh release view "tor-$V" >/dev/null 2>&1; then
+            gh release upload "tor-$V" tor/tor.exe tor/lyrebird.exe --clobber
+          else
+            gh release create "tor-$V" tor/tor.exe tor/lyrebird.exe --title "Tor $V" \
+              --notes "tor.exe and lyrebird.exe from the Tor Project's Tor Expert Bundle $V (Windows x86_64), signature checked."
+          fi
+          DL="https://github.com/${{ github.repository }}/releases/download/tor-$V"
           SHA=$(sha256sum tor/tor.exe | cut -d' ' -f1)
-          URL="https://github.com/${{ github.repository }}/releases/download/tor-$V/tor.exe"
-          printf '{"version":"%s","url":"%s","sha256":"%s"}\n' "$V" "$URL" "$SHA" > tor.json
+          LSHA=$(sha256sum tor/lyrebird.exe | cut -d' ' -f1)
+          printf '{"version":"%s","url":"%s","sha256":"%s","lyrebird":{"url":"%s","sha256":"%s"}}\n' \
+            "$V" "$DL/tor.exe" "$SHA" "$DL/lyrebird.exe" "$LSHA" > tor.json
           node sign.mjs tor tor.json "$(date +%s)"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add tor.json tor.json.sig
-          git commit -m "Tor $V"
+          git commit -m "Tor $V (with lyrebird)"
           git push
