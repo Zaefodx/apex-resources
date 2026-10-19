@@ -4,3 +4,5 @@ tor.json -text
 tor.json.sig -text
 wireproxy.json -text
 wireproxy.json.sig -text
+privacy-lists.json -text
+privacy-lists.json.sig -text

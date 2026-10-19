@@ -36,3 +36,10 @@ Tor Project's GPG signature, releases `tor.exe` here, and commits `tor.json`
 `.github/workflows/wireproxy.yml` publishes a pinned, reviewed wireproxy
 (`github.com/windtf/wireproxy`, ISC) and a signed `wireproxy.json`. Run it by
 hand after updating its VERSION and SHA256.
+
+## Privacy lists
+
+`.github/workflows/privacy.yml` bundles Brave's privacy lists
+(`github.com/brave/adblock-lists`, MPL-2.0: link de-tracking, tracking-parameter
+removal, HTTPS-upgrade / web-compat / user-agent exceptions) into a signed
+`privacy-lists.json` every 6 hours.

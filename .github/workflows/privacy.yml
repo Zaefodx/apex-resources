@@ -1,0 +1,40 @@
+# Bundles Brave's privacy lists (link de-tracking, tracking-parameter removal,
+# HTTPS-upgrade and web-compat exceptions, user-agent exceptions) into a
+# signed privacy-lists.json that Apex downloads every few hours.
+name: Build privacy lists
+
+on:
+  schedule:
+    - cron: '29 */6 * * *'  # every 6 hours
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Bundle lists
+        run: node make_privacy_lists.mjs privacy-lists.json
+
+      - name: Sign and commit if changed
+        env:
+          APEX_SIGNING_KEY: ${{ secrets.APEX_SIGNING_KEY }}
+        run: |
+          if [ -f privacy-lists.json.sig ] && git diff --quiet privacy-lists.json; then
+            echo "No changes."
+            exit 0
+          fi
+          node sign.mjs privacy privacy-lists.json "$(date +%s)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add privacy-lists.json privacy-lists.json.sig
+          git commit -m "Update privacy lists"
+          git push
