@@ -29,7 +29,8 @@ with an offline spare for replacing a leaked key.
 `.github/workflows/tor.yml` publishes the Tor client for Apex's Tor windows:
 daily it checks the Tor Project for a new stable Tor Expert Bundle, verifies the
 Tor Project's GPG signature, releases `tor.exe` here, and commits `tor.json`
-(version, URL, SHA-256), signed for the purpose "tor".
+(version, URLs and SHA-256s of tor.exe and lyrebird.exe for bridges), signed
+for the purpose "tor".
 
 ## wireproxy (bring-your-own WireGuard VPN)
 
