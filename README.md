@@ -19,7 +19,14 @@ Locally: `node make_adblock_resources.mjs <uBlock checkout> <brave resources.jso
 
 Apex only accepts `resources.json` with a valid `resources.json.sig`: an
 Ed25519 signature over `apex-resources\n<version>\n` + the file, made with the
-private key in the repo secret `APEX_SIGNING_KEY` (`sign_resources.mjs`).
+private key in the repo secret `APEX_SIGNING_KEY` (`sign.mjs`).
 Apex also refuses versions older than the one it has. The matching public keys
 are built into Apex (`browser/ui/apex/apex_adblock_resources.cc`), together
 with an offline spare for replacing a leaked key.
+
+## Tor
+
+`.github/workflows/tor.yml` publishes the Tor client for Apex's Tor windows:
+daily it checks the Tor Project for a new stable Tor Expert Bundle, verifies the
+Tor Project's GPG signature, releases `tor.exe` here, and commits `tor.json`
+(version, URL, SHA-256), signed for the purpose "tor".

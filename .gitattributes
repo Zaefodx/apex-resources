@@ -1,2 +1,4 @@
 resources.json -text
 resources.json.sig -text
+tor.json -text
+tor.json.sig -text
